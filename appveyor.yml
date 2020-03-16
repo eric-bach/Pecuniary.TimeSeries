@@ -32,10 +32,10 @@ before_build:
   - dotnet --version
   - dotnet restore --verbosity m
   - nuget restore
+  #-Install AWS SAM CLI
   - aws --version
-  #- TODO install AWS SAM CLI on Python 3
-  - pip install aws-sam-cli
-
+  - msiexec /i https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi /quiet /qn /norestart /log aws-sam-cli.log
+  
 build_script:
   - sam build
 
