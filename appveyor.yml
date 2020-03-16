@@ -34,6 +34,7 @@ before_build:
   - nuget restore
   - aws --version
   #- TODO install AWS SAM CLI
+  - pip3 install aws-sam-cli
 
 build_script:
   #- dotnet publish
