@@ -33,11 +33,10 @@ before_build:
   - dotnet restore --verbosity m
   - nuget restore
   - aws --version
-  #- TODO install AWS SAM CLI
+  #- TODO install AWS SAM CLI on Python 3
   - pip install aws-sam-cli
 
 build_script:
-  #- dotnet publish
   - sam build
 
 after_build:
@@ -66,20 +65,5 @@ artifacts:
 
 # Deployment configuration
 
-#before_deploy:
-  # - ps: Write-Host "Installing AWS CLI..."
-  # - ps: $msiPath = "$($env:USERPROFILE)\AWSCLI64.msi"
-  # - ps: (New-Object Net.WebClient).DownloadFile('https://s3.amazonaws.com/aws-cli/AWSCLI64.msi', $msiPath)
-  # - ps: cmd /c start /wait msiexec /i $msiPath /quiet
-  # - ps: del $msiPath
-  #- cmd: aws --version
-
 deploy_script:
   - cmd: sam deploy
-  #- ps: Write-Host "Installing AWS extensions for dotnet CLI..."
-  #- cmd: dotnet tool install -g Amazon.Lambda.Tools
-  #- cmd: aws configure set aws_access_key_id %AWS_ACCESS_CLIENT_ID%
-  #- cmd: aws configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY%
-  #- cmd: aws configure set region $AWS_REGION%
-  #- ps: Write-Host "Execute deploy script..."
-  #- ps: . .\deploy.ps1 -skipBuild
