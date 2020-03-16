@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HelloWorld", "src\HelloWorl
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{968F8ECD-9C1D-4F8C-81D1-5811A2D1E406}"
 	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
+		codecov.yaml = codecov.yaml
 		README.md = README.md
 		samconfig.toml = samconfig.toml
 		template.yaml = template.yaml
