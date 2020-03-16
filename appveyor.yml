@@ -34,7 +34,7 @@ before_build:
   - nuget restore
   #-Install AWS SAM CLI
   - aws --version
-  - msiexec /i https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi /quiet /qn /norestart /log aws-sam-cli.log
+  - start wait msiexec /i https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi /quiet /qn
   
 build_script:
   - sam build
