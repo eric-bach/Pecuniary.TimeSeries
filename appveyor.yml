@@ -37,7 +37,7 @@ before_build:
   #-Install AWS SAM CLI
   # - cmd: msiexec /qn /l* node-log.txt /i node-v12.16.1-x64.msi
   #- msiexec /i https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi /quiet
-  - msiexec /qn /l* aws-log.txt /i AWS_SAM_CLI_64_PY3.msi
+  - msiexec /qn /l* aws-log.txt /i https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi
   - sleep 60
   - sam --version
   
