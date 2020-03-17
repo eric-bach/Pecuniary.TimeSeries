@@ -35,7 +35,8 @@ before_build:
   # Install AWS cli
   - aws --version
   #-Install AWS SAM CLI
-  - pip3 install aws-sam-cli
+  - python -V
+  - pip install aws-sam-cli
   - sam --version
   
 build_script:
