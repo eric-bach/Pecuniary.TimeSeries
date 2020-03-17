@@ -10,8 +10,7 @@ skip_tags: true
 
 # Environment configuration
 
-#image: Visual Studio 2019
-image: Ubuntu
+image: Visual Studio 2019
 
 init:
   - git config --global core.autocrlf true
@@ -33,28 +32,10 @@ before_build:
   - dotnet --version
   - dotnet restore --verbosity m
   - nuget restore
-  # Install pre-reqs
-  - sudo apt update
-  - sudo apt install curl
   # Install AWS cli
-  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  - unzip awscliv2.zip
-  - sudo ./aws/install
   - aws --version
   #-Install AWS SAM CLI
-  #- sudo yum update -y
-  #- sudo amazon-linux-extras install docker
-  #- sudo service docker start
-  #- sudo usermod -a -G docker ec2-user
-  - docker ps
-  - sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
-  - test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)
-  - test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
-  - test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.bash_profile
-  - echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
-  - brew --version
-  - brew tap aws/tap
-  - brew install aws-sam-cli
+  - pip3 install aws-sam-cli
   - sam --version
   
 build_script:
