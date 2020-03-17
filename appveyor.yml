@@ -41,7 +41,7 @@ before_build:
   - cmd: dir
   - cmd: msiexec /qn /l* aws-log.txt /i aws-sam-cli.msi
   - cmd: dir
-  - cmd: 'C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd' --version
+  - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" --version
   
 build_script:
   - cmd: sam build
