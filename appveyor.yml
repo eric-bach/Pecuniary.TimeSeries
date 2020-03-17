@@ -41,11 +41,10 @@ before_build:
   - cmd: dir
   - cmd: msiexec /qn /l* aws-log.txt /i aws-sam-cli.msi
   - cmd: dir
-  - cmd: "C:\Program Files\Amazon\AWSSAMCLI\bin\sam" --version
+  - cmd: 'C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd' --version
   
 build_script:
-  - cmd: "C:\Program Files\Amazon\AWSSAMCLI\bin\sam" build
-  #- cmd: sam build
+  - cmd: sam build
 
 after_build:
   - choco install opencover.portable
