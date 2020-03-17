@@ -73,4 +73,6 @@ artifacts:
 # Deployment configuration
 
 deploy_script:
+  - cmd: pwd
+  - cmd: dir
   - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" deploy
