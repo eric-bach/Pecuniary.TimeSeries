@@ -35,20 +35,17 @@ before_build:
   # Install AWS cli
   - aws --version
   #-Install AWS SAM CLI
-  # - cmd: msiexec /qn /l* node-log.txt /i node-v12.16.1-x64.msi
-  #- msiexec /i https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi /quiet
   - cmd: pwd
   - cmd: dir
   - ps: Invoke-WebRequest -Uri https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi -OutFile aws-sam-cli.msi
-  #- cmd: sleep 60
-  #- cmd: dir
-  - cmd: msiexec /qn /l* aws-log.txt /i aws-sam-cli.msi
-  #- cmd: sleep 90
   - cmd: dir
-  #- sam --version
+  - cmd: msiexec /qn /l* aws-log.txt /i aws-sam-cli.msi
+  - cmd: dir
+  - cmd: C:\Program Files\Amazon\AWSSAMCLI\bin\sam --version
   
 build_script:
-  - cmd: sam build
+  - cmd: C:\Program Files\Amazon\AWSSAMCLI\bin\sam build
+  #- cmd: sam build
 
 after_build:
   - choco install opencover.portable
