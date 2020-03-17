@@ -36,7 +36,9 @@ before_build:
   - aws --version
   #-Install AWS SAM CLI
   - python -V
-  - pip install aws-sam-cli
+  #- pip install aws-sam-cli
+  - msiexec /i https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi /quiet
+  - sleep 60
   - sam --version
   
 build_script:
