@@ -32,8 +32,11 @@ before_build:
   - dotnet --version
   - dotnet restore --verbosity m
   - nuget restore
-  # Install AWS cli
+  # Configure AWS CLI
   - aws --version
+  - cmd: aws configure set aws_access_key_id %AWS_ACCESS_CLIENT_ID%
+  - cmd: aws configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY%
+  - cmd: aws configure set region $AWS_REGION%
   #-Install AWS SAM CLI
   - ps: Invoke-WebRequest -Uri https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi -OutFile aws-sam-cli.msi
   - cmd: msiexec /qn /l* aws-log.txt /i aws-sam-cli.msi
@@ -69,7 +72,5 @@ artifacts:
 # Deployment configuration
 
 deploy_script:
-  - cmd: aws configure set aws_access_key_id %AWS_ACCESS_CLIENT_ID%
-  - cmd: aws configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY%
-  - cmd: aws configure set region $AWS_REGION%
+  # TODO Look at sam package and sam publish as sam deploy has a prompt
   - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" deploy
