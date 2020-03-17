@@ -71,5 +71,4 @@ artifacts:
 # Deployment configuration
 
 deploy_script:
-  # TODO Look at sam package and sam publish as sam deploy has a prompt
   - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" deploy
