@@ -31,7 +31,6 @@ configuration: Release
 before_build:
   - dotnet --version
   - dotnet restore --verbosity m
-  - nuget restore
   # Configure AWS CLI
   - aws --version
   - cmd: aws configure set aws_access_key_id %AWS_ACCESS_CLIENT_ID%

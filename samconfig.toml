@@ -6,6 +6,6 @@ stack_name = "pecuniary-time-series-updater"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-g1f6xssrslbk"
 s3_prefix = "pecuniary-time-series-updater"
 region = "us-west-2"
-confirm_changeset = true
+confirm_changeset = false
 capabilities = "CAPABILITY_IAM"
 
