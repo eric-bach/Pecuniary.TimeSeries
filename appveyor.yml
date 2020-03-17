@@ -44,7 +44,7 @@ before_build:
   - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" --version
   
 build_script:
-  - cmd: sam build
+  - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" build
 
 after_build:
   - choco install opencover.portable
@@ -73,4 +73,4 @@ artifacts:
 # Deployment configuration
 
 deploy_script:
-  - cmd: sam deploy
+  - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" deploy
