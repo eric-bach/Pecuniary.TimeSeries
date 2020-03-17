@@ -19,9 +19,9 @@ clone_depth: 1
 
 environment:
   AWS_ACCESS_CLIENT_ID:
-    secure: 7mjagrvKpawI4d3QxIUa6fXlvxQm6C3d3DMI7S2WGlY=
+    secure: C7z6rJVutP6zFPnk812u7nrt1hYGNGWkERPCop7crDk=
   AWS_SECRET_ACCESS_KEY:
-    secure: EPjzIETUdn275EWUFFOADjM3De/DpJ1gdVINaJa2by4XHeXkOTrqwHtl60FG+SF4
+    secure: PFyH1mFKZ4J0wtnGyjeQoVcILcubg0nFDo0cIRXs6yMho+l9+V9ZWo70aWBoXhXj
   AWS_REGION: us-west-2
 
 # Build configuration
