@@ -38,8 +38,6 @@ before_build:
   - ps: Invoke-WebRequest -Uri https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi -OutFile aws-sam-cli.msi
   - cmd: msiexec /qn /l* aws-log.txt /i aws-sam-cli.msi
   - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" --version
-  # test
-  - aws s3 ls
   
 build_script:
   - cmd.exe /C "C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd" build
