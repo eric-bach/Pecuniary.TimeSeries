@@ -44,6 +44,7 @@ before_build:
   - cmd: dir
   - cmd: msiexec /qn /l* aws-log.txt /i aws-sam-cli.msi
   - cmd: sleep 60
+  - cmd: dir
   #- sam --version
   
 build_script:
