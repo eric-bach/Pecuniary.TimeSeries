@@ -40,10 +40,10 @@ before_build:
   - cmd: pwd
   - cmd: dir
   - ps: Invoke-WebRequest -Uri https://github.com/awslabs/aws-sam-cli/releases/latest/download/AWS_SAM_CLI_64_PY3.msi -OutFile aws-sam-cli.msi
-  - cmd: sleep 60
-  - cmd: dir
+  #- cmd: sleep 60
+  #- cmd: dir
   - cmd: msiexec /qn /l* aws-log.txt /i aws-sam-cli.msi
-  - cmd: sleep 90
+  #- cmd: sleep 90
   - cmd: dir
   #- sam --version
   
