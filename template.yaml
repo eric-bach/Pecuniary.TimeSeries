@@ -5,7 +5,7 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 10
+    Timeout: 30
 
 Resources:
   TimeSeriesFunction:
@@ -15,11 +15,12 @@ Resources:
       Handler: Pecuniary.TimeSeries::Pecuniary.TimeSeries.Function::FunctionHandler
       Runtime: dotnetcore2.1
       Policies:
-        - Statement:
-          - Effect: Allow
-            Action:
-              - dynamodb:*
-            Resource: "*"
+        - AdministratorAccess
+        #- Statement:
+        #  - Effect: Allow
+        #    Action:
+        #      - dynamodb:*
+        #    Resource: "*"
       Events:
         TimeSeries:
           Type: Api
