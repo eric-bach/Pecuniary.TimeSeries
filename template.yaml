@@ -18,18 +18,7 @@ Resources:
         - Statement:
           - Effect: Allow
             Action:
-              - dynamodb:ListTables
-              - dynamodb:DescribeTable
-              - dynamodb:GetItem
-              - dynamodb:GetRecords
-              - dynamodb:Query
-              - dynamodb:Scan
-              - dynamodb:CreateTable
-              - dynamodb:DeleteItem
-              - dynamodb:DeleteTable
-              - dynamodb:PutItem
-              - dynamodb:UpdateItem
-              - dynamodb:UpdateTable
+              - dynamodb:*
             Resource: "*"
       Events:
         TimeSeries:
