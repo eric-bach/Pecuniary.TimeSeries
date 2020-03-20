@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
@@ -47,17 +48,24 @@ namespace Pecuniary.TimeSeries
             Logger.Log($"Scanning DynamoDB {tableName} for all TimeSeries");
             
             var _dynamoDbClient = new AmazonDynamoDBClient(RegionEndpoint.USWest2);
+            List<Dictionary<string, AttributeValue>> items = new List<Dictionary<string, AttributeValue>>();
             Logger.Log(_dynamoDbClient.ToString());
-            var results = await _dynamoDbClient.ScanAsync(new ScanRequest(tableName));
-            
+            try
+            {
+                var results =  await _dynamoDbClient.ScanAsync(new ScanRequest(tableName));
+                Logger.Log($"Found items: {results.Items.Count}");
+                items = results.Items;
+            }
+            catch (Exception e)
+            {
+                Logger.Log(e.Message);
+            }
 
             //var context = new DynamoDBContext(_dynamoDbClient);
             //var conditions = new List<ScanCondition>();
             //var docs = await context.ScanAsync<TimeSeries>(conditions).GetRemainingAsync();
 
-            Logger.Log($"Found items: {results.Items.Count}");
-
-            return results.Items;
+            return items;
         }
 
         private static async Task<string> GetCallingIP()
