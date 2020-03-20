@@ -56,7 +56,7 @@ test_script:
     -targetargs:"test"
     -output:coverage.xml
     -oldStyle
-    -filter:"+[HelloWorld*]* -[HellowWorld.Tests*]*"
+    -filter:"+[Pecuniary.TimeSeries*]* -[HellowWorld.Tests*]*"
     -register:user
     -returntargetcode
   - codecov -f "coverage.xml"
@@ -64,7 +64,7 @@ test_script:
 # Artifacts configuration
 
 artifacts:
-  - path: \src\HelloWorld\bin\Release\netcoreapp2.1\publish
+  - path: \src\Pecuniary.TimeSeries\bin\Release\netcoreapp2.1\publish
     name: artifact
     type: zip
 
