@@ -29,7 +29,7 @@ namespace Pecuniary.TimeSeries
         }
 
         //public async Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest apigProxyEvent, ILambdaContext context)
-        public async Task<ICollection<TimeSeries>> FunctionHandler(APIGatewayProxyRequest apigProxyEvent, ILambdaContext context)
+        public async Task<ICollection<Dictionary<string, AttributeValue>>> FunctionHandler(APIGatewayProxyRequest apigProxyEvent, ILambdaContext context)
         {
             //var location = await GetCallingIP();
             //var body = new Dictionary<string, string>
@@ -48,18 +48,21 @@ namespace Pecuniary.TimeSeries
             return await GetAsync();
         }
 
-        private async Task<ICollection<TimeSeries>> GetAsync()
+        private async Task<ICollection<Dictionary<string, AttributeValue>>> GetAsync()
         {
             Logger.Log($"Scanning DynamoDB for all TimeSeries");
 
             var context = new DynamoDBContext(_dynamoDbClient);
 
-            var conditions = new List<ScanCondition>();
-            var docs = await context.ScanAsync<TimeSeries>(conditions).GetRemainingAsync();
+            var results = await _dynamoDbClient.ScanAsync(new ScanRequest(tableName));
+            
 
-            Logger.Log($"Found items: {docs.Count}");
+            //var conditions = new List<ScanCondition>();
+            //var docs = await context.ScanAsync<TimeSeries>(conditions).GetRemainingAsync();
 
-            return docs;
+            Logger.Log($"Found items: {results.Items.Count}");
+
+            return results.Items;
         }
 
         private static async Task<string> GetCallingIP()
