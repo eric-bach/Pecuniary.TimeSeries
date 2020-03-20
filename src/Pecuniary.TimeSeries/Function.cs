@@ -47,6 +47,7 @@ namespace Pecuniary.TimeSeries
             Logger.Log($"Scanning DynamoDB {tableName} for all TimeSeries");
             
             var _dynamoDbClient = new AmazonDynamoDBClient(RegionEndpoint.USWest2);
+            Logger.Log(_dynamoDbClient.ToString());
             var results = await _dynamoDbClient.ScanAsync(new ScanRequest(tableName));
             
 
