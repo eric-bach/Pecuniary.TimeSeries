@@ -22,12 +22,6 @@ namespace Pecuniary.TimeSeries
         private readonly AmazonDynamoDBClient _dynamoDbClient;
         private static string tableName = "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev";
 
-
-        public Function()
-        {
-            _dynamoDbClient = new AmazonDynamoDBClient(RegionEndpoint.USWest2);
-        }
-
         //public async Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest apigProxyEvent, ILambdaContext context)
         public async Task<ICollection<Dictionary<string, AttributeValue>>> FunctionHandler(APIGatewayProxyRequest apigProxyEvent, ILambdaContext context)
         {
@@ -50,13 +44,13 @@ namespace Pecuniary.TimeSeries
 
         private async Task<ICollection<Dictionary<string, AttributeValue>>> GetAsync()
         {
-            Logger.Log($"Scanning DynamoDB for all TimeSeries");
-
-            var context = new DynamoDBContext(_dynamoDbClient);
-
+            Logger.Log($"Scanning DynamoDB {tableName} for all TimeSeries");
+            
+            var _dynamoDbClient = new AmazonDynamoDBClient(RegionEndpoint.USWest2);
             var results = await _dynamoDbClient.ScanAsync(new ScanRequest(tableName));
             
 
+            //var context = new DynamoDBContext(_dynamoDbClient);
             //var conditions = new List<ScanCondition>();
             //var docs = await context.ScanAsync<TimeSeries>(conditions).GetRemainingAsync();
 
