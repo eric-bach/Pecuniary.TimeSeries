@@ -15,7 +15,7 @@ Resources:
       Handler: Pecuniary.TimeSeries::Pecuniary.TimeSeries.Function::FunctionHandler
       Runtime: dotnetcore2.1
       Policies:
-        - AdministratorAccess
+        - AmazonDynamoDBFullAccess
         #- Statement:
         #  - Effect: Allow
         #    Action:
