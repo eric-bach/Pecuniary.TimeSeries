@@ -15,12 +15,8 @@ Resources:
       Handler: Pecuniary.TimeSeries::Pecuniary.TimeSeries.Function::FunctionHandler
       Runtime: dotnetcore2.1
       Policies:
-        - AmazonDynamoDBFullAccess
-        #- Statement:
-        #  - Effect: Allow
-        #    Action:
-        #      - dynamodb:*
-        #    Resource: "*"
+        #- AmazonDynamoDBFullAccess
+        - AWSLambdaDynamoDBExecutionRole
       Events:
         TimeSeries:
           Type: Api
