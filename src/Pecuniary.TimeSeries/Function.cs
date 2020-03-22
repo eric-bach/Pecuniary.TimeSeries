@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.DynamoDBv2;
@@ -8,6 +11,8 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using Amazon.Lambda.Core;
+using Amazon.SimpleSystemsManagement;
+using Amazon.SimpleSystemsManagement.Model;
 using EricBach.LambdaLogger;
 using Newtonsoft.Json;
 
@@ -19,22 +24,50 @@ namespace Pecuniary.TimeSeries
     {
         private readonly AmazonDynamoDBClient _dynamoDbClient;
         private readonly DynamoDBContext _dynamoDbContext;
+        private readonly HttpClient _httpClient;
         // TODO Environment variable
-        private static string tableName = "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev";
+        private static readonly string tableName = "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev";
+
 
         public Function()
         {
             _dynamoDbClient = new AmazonDynamoDBClient(RegionEndpoint.USWest2);
             _dynamoDbContext = new DynamoDBContext(_dynamoDbClient);
+            _httpClient = new HttpClient();
         }
 
         public async Task FunctionHandler(ILambdaContext context)
         {
             var timeSeries = await GetAsync<TimeSeries>();
-
-            foreach (var t in timeSeries)
+            
+            foreach (var t in timeSeries.OrderBy(t => t.symbol).ThenBy(t => t.date))
             {
-                Logger.Log(t.Symbol);
+                await GetSymbol(t.symbol, DateTime.Parse(t.date));
+            }
+        }
+
+        private async Task GetSymbol(string symbol, DateTime date)
+        {
+            AmazonSimpleSystemsManagementClient ssmClient = new AmazonSimpleSystemsManagementClient(RegionEndpoint.USWest2);
+            var apiKey = await ssmClient.GetParameterAsync(new GetParameterRequest
+            {
+                Name = "AlphaVantageApiKey"
+            });
+
+            var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={apiKey}";
+            //var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=full&apikey={apiKey}";
+
+            try
+            {
+                var responseBody = await _httpClient.GetStringAsync(uri);
+
+                var quotes = ConvertAlphaVantage(responseBody);
+
+                Logger.Log(responseBody);
+            }
+            catch (HttpRequestException e)
+            {
+                Logger.Log($"Message :{e.Message}");
             }
         }
 
@@ -67,38 +100,31 @@ namespace Pecuniary.TimeSeries
             var doc = Document.FromAttributeMap(obj);
             return context.FromDocument<T>(doc);
         }
-    }
 
-    // TODO Move to class
-    public class TimeSeries
-    {
-        [JsonProperty("id")]
-        public Guid Id { get; set; }
-        [JsonProperty("close")]
-        public decimal Close { get; set; }
-        [JsonProperty("createdAt")]
-        public DateTime CreatedAt { get; set; }
-        [JsonProperty("currency")]
-        public string Currency { get; set; }
-        [JsonProperty("date")]
-        public string Date { get; set; }
-        [JsonProperty("high")]
-        public decimal High { get; set; }
-        [JsonProperty("low")]
-        public decimal Low { get; set; }
-        [JsonProperty("name")]
-        public string Name { get; set; }
-        [JsonProperty("open")]
-        public decimal Open { get; set; }
-        [JsonProperty("region")]
-        public string Region { get; set; }
-        [JsonProperty("symbol")]
-        public string Symbol { get; set; }
-        [JsonProperty("type")]
-        public string Type { get; set; }
-        [JsonProperty("updatedAt")]
-        public DateTime UpdatedAt { get; set; }
-        [JsonProperty("volume")]
-        public long Volume { get; set; }
+        private static List<Quotes> ConvertAlphaVantage(string requestBody)
+        {
+            var timeSeries = new Regex(@"\""Time\sSeries\s\(Daily\)\"":\s{(.*)}", RegexOptions.Singleline);
+            var timeSeriesMatches = timeSeries.Matches(requestBody);
+
+            var timeSeriesQuotes = new Regex(@"(\d\d\d\d-\d\d-\d\d)\"":\s{(.*?)}", RegexOptions.Singleline);
+            var timeSeriesQuotesMatches = timeSeriesQuotes.Matches(timeSeriesMatches[0].Groups[1].Value);
+
+            var quotes = new List<Quotes>();
+            try
+            {
+                for (var i = 0; i < timeSeriesQuotesMatches.Count; i++)
+                {
+                    var quote = JsonConvert.DeserializeObject<Quotes>("{" + timeSeriesQuotesMatches[i].Groups[2].Value + "}");
+                    quote.Date = timeSeriesQuotesMatches[i].Groups[1].Value;
+
+                    quotes.Add(quote);
+                }
+            }
+            catch (Exception e)
+            {
+            }
+
+            return quotes;
+        }
     }
 }
