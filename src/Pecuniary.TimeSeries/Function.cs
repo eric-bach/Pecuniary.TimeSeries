@@ -38,48 +38,82 @@ namespace Pecuniary.TimeSeries
 
         public async Task FunctionHandler(ILambdaContext context)
         {
-            var timeSeries = await GetAsync<TimeSeries>();
-            
+            // Get all the unique symbols
+            var timeSeries = FilterTimeSeries(await GetAsync<TimeSeries>());
+
+            // Get the quotes for the unique symbols
+            var symbols = new List<Quotes>();
             foreach (var t in timeSeries.OrderBy(t => t.symbol).ThenBy(t => t.date))
             {
-                await GetSymbol(t.symbol, DateTime.Parse(t.date));
+                var symbol = await GetSymbol(t.symbol, DateTime.Parse(t.date));
+
+                symbols.AddRange(symbol);
             }
+
+            // TODO Write back to DynamoDB
         }
 
-        private async Task GetSymbol(string symbol, DateTime date)
+        private async Task<IEnumerable<Quotes>> GetSymbol(string symbol, DateTime date)
         {
-            AmazonSimpleSystemsManagementClient ssmClient = new AmazonSimpleSystemsManagementClient(RegionEndpoint.USWest2);
-            var apiKey = await ssmClient.GetParameterAsync(new GetParameterRequest
-            {
-                Name = "AlphaVantageApiKey"
-            });
-
-            var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={apiKey}";
-            //var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=full&apikey={apiKey}";
+            var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={await GetApiKey()}";
+            //var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=full&apikey={await GetApiKey()}";
 
             try
             {
                 var responseBody = await _httpClient.GetStringAsync(uri);
 
-                var quotes = ConvertAlphaVantage(responseBody);
+                var quotes = ConvertAlphaVantage(symbol, responseBody);
 
-                Logger.Log(responseBody);
+                return quotes.Where(q => DateTime.Parse(q.Date) >= date);
             }
             catch (HttpRequestException e)
             {
                 Logger.Log($"Message :{e.Message}");
             }
+
+            return new List<Quotes>();
+        }
+
+        /// <summary>
+        /// Returns unique time series symbols
+        /// </summary>
+        /// <param name="timeSeries"></param>
+        /// <returns></returns>
+        private static IEnumerable<TimeSeries> FilterTimeSeries(IEnumerable<TimeSeries> timeSeries)
+        {
+            var groupedTimeSeries = timeSeries.GroupBy(t => t.symbol).ToList();
+            var symbols = new List<TimeSeries>();
+
+            for (var i = 0; i < groupedTimeSeries.Count; i++)
+            {
+                var symbol = groupedTimeSeries.ToList()[i].ToList().OrderByDescending(t => t.date).First();
+
+                symbols.Add(symbol);
+            }
+
+            return symbols;
+        }
+
+        private async Task<string> GetApiKey()
+        {
+            var ssmClient = new AmazonSimpleSystemsManagementClient(RegionEndpoint.USWest2);
+            var apiKey = await ssmClient.GetParameterAsync(new GetParameterRequest
+            {
+                Name = "AlphaVantageApiKey"
+            });
+
+            return apiKey.Parameter.Value;
         }
 
         private async Task<ICollection<T>> GetAsync<T>()
         {
             Logger.Log($"Scanning DynamoDB {tableName} for all TimeSeries");
-        
+
             ICollection<T> results = new List<T>();
             try
             {
                 var docs = await _dynamoDbClient.ScanAsync(new ScanRequest(tableName));
-                
+
                 Logger.Log($"Found items: {docs.Items.Count}");
 
                 foreach (var t in docs.Items.Select(i => DocumentToClass<T>(_dynamoDbContext, i)))
@@ -101,7 +135,12 @@ namespace Pecuniary.TimeSeries
             return context.FromDocument<T>(doc);
         }
 
-        private static List<Quotes> ConvertAlphaVantage(string requestBody)
+        /// <summary>
+        /// Convert the improper AlphaVantage JSON to a Quote object
+        /// </summary>
+        /// <param name="requestBody"></param>
+        /// <returns></returns>
+        private static IEnumerable<Quotes> ConvertAlphaVantage(string symbol, string requestBody)
         {
             var timeSeries = new Regex(@"\""Time\sSeries\s\(Daily\)\"":\s{(.*)}", RegexOptions.Singleline);
             var timeSeriesMatches = timeSeries.Matches(requestBody);
@@ -116,6 +155,7 @@ namespace Pecuniary.TimeSeries
                 {
                     var quote = JsonConvert.DeserializeObject<Quotes>("{" + timeSeriesQuotesMatches[i].Groups[2].Value + "}");
                     quote.Date = timeSeriesQuotesMatches[i].Groups[1].Value;
+                    quote.Symbol = symbol;
 
                     quotes.Add(quote);
                 }
