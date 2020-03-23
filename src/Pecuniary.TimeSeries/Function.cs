@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Amazon;
@@ -42,27 +41,59 @@ namespace Pecuniary.TimeSeries
             var timeSeries = FilterTimeSeries(await GetAsync<TimeSeries>());
 
             // Get the quotes for the unique symbols
-            var symbols = new List<Quotes>();
             foreach (var t in timeSeries.OrderBy(t => t.symbol).ThenBy(t => t.date))
             {
-                var symbol = await GetSymbol(t.symbol, DateTime.Parse(t.date));
+                var symbol = await GetSymbol(t, DateTime.Parse(t.date));
 
-                symbols.AddRange(symbol);
+                // Save quotes to DynamoDB
+                await SaveToDynamoAsync(symbol);
             }
-
-            // TODO Write back to DynamoDB
         }
 
-        private async Task<IEnumerable<Quotes>> GetSymbol(string symbol, DateTime date)
+        private async Task SaveToDynamoAsync(IEnumerable<Quotes> symbols)
         {
-            var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={await GetApiKey()}";
-            //var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=full&apikey={await GetApiKey()}";
+            foreach (var s in symbols)
+            {
+                try
+                {
+                    var table = Table.LoadTable(_dynamoDbClient, tableName);
+
+                    var record = new Document
+                    {
+                        ["close"] = s.Close,
+                        ["createdAt"] = DateTime.UtcNow.ToString("O"),
+                        ["currency"] = s.Currency,
+                        ["date"] = s.Date,
+                        ["high"] = s.High,
+                        ["id"] = Guid.NewGuid(),
+                        ["low"] = s.Low,
+                        ["name"] = s.Name,
+                        ["open"] = s.Open,
+                        ["region"] = s.Region,
+                        ["symbol"] = s.Symbol,
+                        ["type"] = s.Type,
+                        ["updatedAt"] = DateTime.UtcNow.ToString("O"),
+                        ["volume"] = s.Volume
+                    };
+
+                    await table.PutItemAsync(record);
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+
+        private async Task<IEnumerable<Quotes>> GetSymbol(TimeSeries timeSeries, DateTime date)
+        {
+            var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={timeSeries.symbol}&apikey={await GetApiKey()}";
+            //var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={timeSeries.symbol}&outputsize=full&apikey={await GetApiKey()}";
 
             try
             {
                 var responseBody = await _httpClient.GetStringAsync(uri);
 
-                var quotes = ConvertAlphaVantage(symbol, responseBody);
+                var quotes = ConvertAlphaVantage(timeSeries, responseBody);
 
                 return quotes.Where(q => DateTime.Parse(q.Date) >= date);
             }
@@ -140,7 +171,7 @@ namespace Pecuniary.TimeSeries
         /// </summary>
         /// <param name="requestBody"></param>
         /// <returns></returns>
-        private static IEnumerable<Quotes> ConvertAlphaVantage(string symbol, string requestBody)
+        private static IEnumerable<Quotes> ConvertAlphaVantage(TimeSeries ts, string requestBody)
         {
             var timeSeries = new Regex(@"\""Time\sSeries\s\(Daily\)\"":\s{(.*)}", RegexOptions.Singleline);
             var timeSeriesMatches = timeSeries.Matches(requestBody);
@@ -155,7 +186,11 @@ namespace Pecuniary.TimeSeries
                 {
                     var quote = JsonConvert.DeserializeObject<Quotes>("{" + timeSeriesQuotesMatches[i].Groups[2].Value + "}");
                     quote.Date = timeSeriesQuotesMatches[i].Groups[1].Value;
-                    quote.Symbol = symbol;
+                    quote.Symbol = ts.symbol;
+                    quote.Name = ts.name;
+                    quote.Region = ts.region;
+                    quote.Type = ts.type;
+                    quote.Currency = ts.currency;
 
                     quotes.Add(quote);
                 }
