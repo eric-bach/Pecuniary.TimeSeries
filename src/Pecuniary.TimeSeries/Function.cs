@@ -1,19 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Amazon;
-using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
-using Amazon.DynamoDBv2.Model;
 using Amazon.Lambda.Core;
-using Amazon.SimpleSystemsManagement;
-using Amazon.SimpleSystemsManagement.Model;
-using EricBach.LambdaLogger;
-using Newtonsoft.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
 
@@ -21,185 +11,63 @@ namespace Pecuniary.TimeSeries
 {
     public class Function
     {
-        private readonly AmazonDynamoDBClient _dynamoDbClient;
-        private readonly DynamoDBContext _dynamoDbContext;
-        private readonly HttpClient _httpClient;
-        // TODO Environment variable
-        private static readonly string tableName = "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev";
+        private AlphaVantageService _alphaVantageService { get; set; }
+        public IDynamoDbService _dynamoDbService { get; set; }
 
+        // TODO Environment variable
+        private static readonly string _tableName = "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev";
 
         public Function()
         {
-            _dynamoDbClient = new AmazonDynamoDBClient(RegionEndpoint.USWest2);
-            _dynamoDbContext = new DynamoDBContext(_dynamoDbClient);
-            _httpClient = new HttpClient();
+            var serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection);
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            _alphaVantageService = serviceProvider.GetService<AlphaVantageService>();
+            _dynamoDbService = serviceProvider.GetService<IDynamoDbService>();
         }
 
-        public async Task FunctionHandler(ILambdaContext context)
+        private static void ConfigureServices(IServiceCollection serviceCollection)
+        {
+            serviceCollection.AddScoped<AlphaVantageService>();
+            serviceCollection.AddTransient<IDynamoDbService>(t => new DynamoDbService(_tableName));
+        }
+
+        public async Task FunctionHandler()
         {
             // Get all the unique symbols
-            var timeSeries = FilterTimeSeries(await GetAsync<TimeSeries>());
+            var docs = await _dynamoDbService.GetAllAsync<TimeSeries>(_tableName);
+            var timeSeries = FilterTimeSeries(docs);
 
             // Get the quotes for the unique symbols
-            foreach (var t in timeSeries.OrderBy(t => t.symbol).ThenBy(t => t.date))
+            foreach (var t in timeSeries)
             {
-                var symbol = await GetSymbol(t, DateTime.Parse(t.date));
+                var symbol = await _alphaVantageService.GetSymbol(t, DateTime.Parse(t.date));
 
                 // Save quotes to DynamoDB
-                await SaveToDynamoAsync(symbol);
+                await _dynamoDbService.SaveToDynamoAsync(symbol);
             }
-        }
-
-        private async Task SaveToDynamoAsync(IEnumerable<Quotes> symbols)
-        {
-            foreach (var s in symbols)
-            {
-                try
-                {
-                    var table = Table.LoadTable(_dynamoDbClient, tableName);
-
-                    var record = new Document
-                    {
-                        ["close"] = s.Close,
-                        ["createdAt"] = DateTime.UtcNow.ToString("O"),
-                        ["currency"] = s.Currency,
-                        ["date"] = s.Date,
-                        ["high"] = s.High,
-                        ["id"] = Guid.NewGuid(),
-                        ["low"] = s.Low,
-                        ["name"] = s.Name,
-                        ["open"] = s.Open,
-                        ["region"] = s.Region,
-                        ["symbol"] = s.Symbol,
-                        ["type"] = s.Type,
-                        ["updatedAt"] = DateTime.UtcNow.ToString("O"),
-                        ["volume"] = s.Volume
-                    };
-
-                    await table.PutItemAsync(record);
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-        }
-
-        private async Task<IEnumerable<Quotes>> GetSymbol(TimeSeries timeSeries, DateTime date)
-        {
-            var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={timeSeries.symbol}&apikey={await GetApiKey()}";
-            //var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={timeSeries.symbol}&outputsize=full&apikey={await GetApiKey()}";
-
-            try
-            {
-                var responseBody = await _httpClient.GetStringAsync(uri);
-
-                var quotes = ConvertAlphaVantage(timeSeries, responseBody);
-
-                return quotes.Where(q => DateTime.Parse(q.Date) >= date);
-            }
-            catch (HttpRequestException e)
-            {
-                Logger.Log($"Message :{e.Message}");
-            }
-
-            return new List<Quotes>();
         }
 
         /// <summary>
-        /// Returns unique time series symbols
+        /// Returns a sorted collection of unique time series symbols. If more than one symbol is found return the one with the most recent date
         /// </summary>
         /// <param name="timeSeries"></param>
         /// <returns></returns>
         private static IEnumerable<TimeSeries> FilterTimeSeries(IEnumerable<TimeSeries> timeSeries)
         {
             var groupedTimeSeries = timeSeries.GroupBy(t => t.symbol).ToList();
-            var symbols = new List<TimeSeries>();
 
+            var symbols = new List<TimeSeries>();
             for (var i = 0; i < groupedTimeSeries.Count; i++)
             {
+                // Take the time series with the most recent date
                 var symbol = groupedTimeSeries.ToList()[i].ToList().OrderByDescending(t => t.date).First();
 
                 symbols.Add(symbol);
             }
 
-            return symbols;
-        }
-
-        private async Task<string> GetApiKey()
-        {
-            var ssmClient = new AmazonSimpleSystemsManagementClient(RegionEndpoint.USWest2);
-            var apiKey = await ssmClient.GetParameterAsync(new GetParameterRequest
-            {
-                Name = "AlphaVantageApiKey"
-            });
-
-            return apiKey.Parameter.Value;
-        }
-
-        private async Task<ICollection<T>> GetAsync<T>()
-        {
-            Logger.Log($"Scanning DynamoDB {tableName} for all TimeSeries");
-
-            ICollection<T> results = new List<T>();
-            try
-            {
-                var docs = await _dynamoDbClient.ScanAsync(new ScanRequest(tableName));
-
-                Logger.Log($"Found items: {docs.Items.Count}");
-
-                foreach (var t in docs.Items.Select(i => DocumentToClass<T>(_dynamoDbContext, i)))
-                {
-                    results.Add(t);
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Log(e.Message);
-            }
-
-            return results;
-        }
-
-        private static T DocumentToClass<T>(DynamoDBContext context, Dictionary<string, AttributeValue> obj)
-        {
-            var doc = Document.FromAttributeMap(obj);
-            return context.FromDocument<T>(doc);
-        }
-
-        /// <summary>
-        /// Convert the improper AlphaVantage JSON to a Quote object
-        /// </summary>
-        /// <param name="requestBody"></param>
-        /// <returns></returns>
-        private static IEnumerable<Quotes> ConvertAlphaVantage(TimeSeries ts, string requestBody)
-        {
-            var timeSeries = new Regex(@"\""Time\sSeries\s\(Daily\)\"":\s{(.*)}", RegexOptions.Singleline);
-            var timeSeriesMatches = timeSeries.Matches(requestBody);
-
-            var timeSeriesQuotes = new Regex(@"(\d\d\d\d-\d\d-\d\d)\"":\s{(.*?)}", RegexOptions.Singleline);
-            var timeSeriesQuotesMatches = timeSeriesQuotes.Matches(timeSeriesMatches[0].Groups[1].Value);
-
-            var quotes = new List<Quotes>();
-            try
-            {
-                for (var i = 0; i < timeSeriesQuotesMatches.Count; i++)
-                {
-                    var quote = JsonConvert.DeserializeObject<Quotes>("{" + timeSeriesQuotesMatches[i].Groups[2].Value + "}");
-                    quote.Date = timeSeriesQuotesMatches[i].Groups[1].Value;
-                    quote.Symbol = ts.symbol;
-                    quote.Name = ts.name;
-                    quote.Region = ts.region;
-                    quote.Type = ts.type;
-                    quote.Currency = ts.currency;
-
-                    quotes.Add(quote);
-                }
-            }
-            catch (Exception e)
-            {
-            }
-
-            return quotes;
+            return symbols.OrderBy(t => t.symbol).ThenBy(t => t.date);
         }
     }
 }

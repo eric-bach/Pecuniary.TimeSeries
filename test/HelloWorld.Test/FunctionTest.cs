@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Xunit;
-using Amazon.Lambda.TestUtilities;
 using Pecuniary.TimeSeries;
 
 namespace HelloWorld.Tests
@@ -10,10 +9,9 @@ namespace HelloWorld.Tests
         [Fact]
         public async Task TestHelloWorldFunctionHandler()
         {
-            var context = new TestLambdaContext();
-
             var function = new Function();
-            await function.FunctionHandler(context);
+
+            await function.FunctionHandler();
 
             //Assert.NotNull(response);
             //Assert.Equal(expectedResponse.Body, response.Body);
