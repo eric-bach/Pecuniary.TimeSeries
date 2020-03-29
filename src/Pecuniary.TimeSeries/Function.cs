@@ -15,14 +15,15 @@ namespace Pecuniary.TimeSeries
         private AlphaVantageService AlphaVantageService { get; }
         public IDynamoDbService DynamoDbService { get; set; }
 
-        // TODO Environment variable
-        private static readonly string _tableName = "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev";
+        private static string _tableName;
 
         public Function()
         {
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
             var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            _tableName = Environment.GetEnvironmentVariable("TableName");
 
             AlphaVantageService = serviceProvider.GetService<AlphaVantageService>();
             DynamoDbService = serviceProvider.GetService<IDynamoDbService>();
