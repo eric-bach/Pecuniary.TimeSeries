@@ -23,7 +23,7 @@ namespace Pecuniary.TimeSeries
             ConfigureServices(serviceCollection);
             var serviceProvider = serviceCollection.BuildServiceProvider();
 
-            _tableName = Environment.GetEnvironmentVariable("TableName");
+            _tableName = Environment.GetEnvironmentVariable("TableName") ?? "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev";
 
             AlphaVantageService = serviceProvider.GetService<AlphaVantageService>();
             DynamoDbService = serviceProvider.GetService<IDynamoDbService>();

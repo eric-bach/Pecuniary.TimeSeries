@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.DynamoDBv2;
@@ -75,7 +76,7 @@ namespace Pecuniary.TimeSeries.Services
                     var record = new Document
                     {
                         ["close"] = s.Close,
-                        ["createdAt"] = DateTime.UtcNow.ToString("O"),
+                        ["createdAt"] = DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fffK", CultureInfo.InvariantCulture),
                         ["currency"] = s.Currency,
                         ["date"] = s.Date,
                         ["high"] = s.High,
@@ -86,7 +87,7 @@ namespace Pecuniary.TimeSeries.Services
                         ["region"] = s.Region,
                         ["symbol"] = s.Symbol,
                         ["type"] = s.Type,
-                        ["updatedAt"] = DateTime.UtcNow.ToString("O"),
+                        ["updatedAt"] = DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fffK", CultureInfo.InvariantCulture),
                         ["volume"] = s.Volume
                     };
 
