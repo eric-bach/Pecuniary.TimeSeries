@@ -7,8 +7,9 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using EricBach.LambdaLogger;
+using Pecuniary.TimeSeries.Models;
 
-namespace Pecuniary.TimeSeries
+namespace Pecuniary.TimeSeries.Services
 {
     public interface IDynamoDbService
     {

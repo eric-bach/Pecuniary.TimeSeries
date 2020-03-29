@@ -9,8 +9,9 @@ using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
 using EricBach.LambdaLogger;
 using Newtonsoft.Json;
+using Pecuniary.TimeSeries.Models;
 
-namespace Pecuniary.TimeSeries
+namespace Pecuniary.TimeSeries.Services
 {
     public class AlphaVantageService
     {
@@ -21,7 +22,7 @@ namespace Pecuniary.TimeSeries
             _httpClient = new HttpClient();
         }
 
-        public async Task<IEnumerable<Quotes>> GetSymbol(TimeSeries timeSeries, DateTime date)
+        public async Task<IEnumerable<Quotes>> GetSymbol(Models.TimeSeries timeSeries, DateTime date)
         {
             var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={timeSeries.symbol}&outputsize=full&apikey={await GetApiKey()}";
 
@@ -58,7 +59,7 @@ namespace Pecuniary.TimeSeries
         /// <param name="timeSeries"></param>
         /// <param name="requestBody"></param>
         /// <returns></returns>
-        private static IEnumerable<Quotes> ConvertAlphaVantage(TimeSeries timeSeries, string requestBody)
+        private static IEnumerable<Quotes> ConvertAlphaVantage(Models.TimeSeries timeSeries, string requestBody)
         {
             var ts = new Regex(@"\""Time\sSeries\s\(Daily\)\"":\s{(.*)}", RegexOptions.Singleline);
             var tsMatches = ts.Matches(requestBody);

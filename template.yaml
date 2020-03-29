@@ -15,7 +15,6 @@ Resources:
       Handler: Pecuniary.TimeSeries::Pecuniary.TimeSeries.Function::FunctionHandler
       Runtime: dotnetcore2.1
       Policies:
-        #- AmazonDynamoDBFullAccess
         - AWSLambdaDynamoDBExecutionRole
         - Statement:
           - Effect: Allow
@@ -28,33 +27,18 @@ Resources:
               - logs:CreateLogGroup
               - logs:CreateLogStream
               - logs:PutLogEvents
-              #- dynamodb:ListTables
-              #- dynamodb:DescribeTable
-              #- dynamodb:GetItem
-              #- dynamodb:GetRecords
-              #- dynamodb:Query
-              #- dynamodb:Scan
-              #- dynamodb:CreateTable
-              #- dynamodb:DeleteItem
-              #- dynamodb:DeleteTable
-              #- dynamodb:PutItem
-              #- dynamodb:UpdateItem
-              #- dynamodb:UpdateTable
             Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/TimeSeries-*
       Events:
         TimeSeries:
           Type: Api
           Properties:
-            Path: /hello
-            Method: get
+            Path: /timeseries
+            Method: post
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   TimeSeriesApi:
-    Description: "API Gateway endpoint URL for Prod stage for Pecuniary.TimeSeries function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/timeseries/"
   TimeSeriesFunction:
     Description: "Pecuniary.TimeSeries Lambda Function ARN"
     Value: !GetAtt TimeSeriesFunction.Arn

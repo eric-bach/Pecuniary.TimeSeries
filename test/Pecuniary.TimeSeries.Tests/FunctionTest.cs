@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
 using Xunit;
-using Pecuniary.TimeSeries;
 
-namespace HelloWorld.Tests
+namespace Pecuniary.TimeSeries.Tests
 {
     public class FunctionTest
     {
