@@ -15,19 +15,18 @@ Resources:
       Handler: Pecuniary.TimeSeries::Pecuniary.TimeSeries.Function::FunctionHandler
       Runtime: dotnetcore2.1
       Policies:
-        - AWSLambdaDynamoDBExecutionRole
-        #- Statement:
-        #  - Effect: Allow
-        #    Action:
-        #      - dynamodb:DescribeStream
-        #      - dynamodb:GetRecords
-        #      - dynamodb:GetShardIterator
-        #      - dynamodb:ListStreams
-        #      - dynamodb:Scan
-        #      - logs:CreateLogGroup
-        #      - logs:CreateLogStream
-        #      - logs:PutLogEvents
-        #    Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/TimeSeries-*
+        - Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:DescribeStream
+              - dynamodb:GetRecords
+              - dynamodb:GetShardIterator
+              - dynamodb:ListStreams
+              - dynamodb:Scan
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/TimeSeries-*
       Environment:
         Variables:
           TableName: TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev
