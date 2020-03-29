@@ -27,6 +27,10 @@ Resources:
               - logs:CreateLogStream
               - logs:PutLogEvents
             Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/TimeSeries-*
+          - Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource: !Sub arn:aws:ssm:us-west-2:${AWS::Region}:parameter/AlphaVantageApiKey
       Environment:
         Variables:
           TableName: TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev
