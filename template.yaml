@@ -19,6 +19,7 @@ Resources:
           - Effect: Allow
             Action:
               - dynamodb:DescribeStream
+              - dynamodb:DescribeTable
               - dynamodb:GetRecords
               - dynamodb:GetShardIterator
               - dynamodb:ListStreams
