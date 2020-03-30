@@ -32,21 +32,21 @@ Resources:
           - Effect: Allow
             Action:
               - ssm:GetParameter
-            Resource: "*" #!Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/AlphaVantageApiKey*
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/AlphaVantageApiKey*
       Environment:
         Variables:
           TableName: TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev
-      Events:
-        TimeSeries:
-          Type: Api
-          Properties:
-            Path: /timeseries
-            Method: post
+#      Events:
+#        TimeSeries:
+#          Type: Api
+#          Properties:
+#            Path: /timeseries
+#            Method: post
 
 Outputs:
-  TimeSeriesApi:
-    Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/timeseries/"
+#  TimeSeriesApi:
+#    Description: "API Gateway endpoint URL"
+#    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/timeseries/"
   TimeSeriesFunction:
     Description: "Pecuniary.TimeSeries Lambda Function ARN"
     Value: !GetAtt TimeSeriesFunction.Arn
