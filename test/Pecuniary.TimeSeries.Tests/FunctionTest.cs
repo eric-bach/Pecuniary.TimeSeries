@@ -10,7 +10,7 @@ namespace Pecuniary.TimeSeries.Tests
         {
             var function = new Function();
 
-            await function.FunctionHandler();
+            //await function.FunctionHandler();
 
             //Assert.NotNull(response);
             //Assert.Equal(expectedResponse.Body, response.Body);

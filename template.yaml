@@ -24,6 +24,7 @@ Resources:
               - dynamodb:GetShardIterator
               - dynamodb:ListStreams
               - dynamodb:Scan
+              - dynamodb:PutItem
               - logs:CreateLogGroup
               - logs:CreateLogStream
               - logs:PutLogEvents
