@@ -93,8 +93,9 @@ namespace Pecuniary.TimeSeries.Services
 
                     await table.PutItemAsync(record);
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
+                    Logger.Log(e.Message);
                 }
             }
         }

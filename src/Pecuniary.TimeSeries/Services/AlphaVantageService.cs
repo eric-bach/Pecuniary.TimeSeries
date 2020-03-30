@@ -28,9 +28,13 @@ namespace Pecuniary.TimeSeries.Services
 
             try
             {
+                Logger.Log($"Getting quotes for {timeSeries.symbol}");
+
                 var responseBody = await _httpClient.GetStringAsync(uri);
 
                 var quotes = ConvertAlphaVantage(timeSeries, responseBody);
+
+                Logger.Log($"Found {quotes.Count()} quotes for {timeSeries.symbol}");
 
                 return quotes.Where(q => DateTime.Parse(q.Date) >= date);
             }
@@ -49,6 +53,8 @@ namespace Pecuniary.TimeSeries.Services
             {
                 Name = "AlphaVantageApiKey"
             });
+
+            Logger.Log("Retrieved AlphaVantage API Key");
 
             return apiKey.Parameter.Value;
         }

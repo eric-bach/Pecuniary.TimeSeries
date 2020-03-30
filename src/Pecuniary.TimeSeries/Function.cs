@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Amazon.Lambda.Core;
+using EricBach.LambdaLogger;
 using Microsoft.Extensions.DependencyInjection;
 using Pecuniary.TimeSeries.Services;
 
@@ -69,6 +70,7 @@ namespace Pecuniary.TimeSeries
                 symbols.Add(symbol);
             }
 
+            Logger.Log($"TEMP: Returning {symbols.Count} symbols");
             return symbols.OrderBy(t => t.symbol).ThenBy(t => t.date);
         }
     }
