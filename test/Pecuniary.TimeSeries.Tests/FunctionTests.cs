@@ -10,8 +10,8 @@ namespace Pecuniary.TimeSeries.Tests
 {
     public class FunctionTest
     {
-        [Fact(Skip="Will create data")]
-        public async Task RealTest()
+        [Fact(Skip="Integration Test")]
+        public async Task IntegrationTest()
         {
             Environment.SetEnvironmentVariable("TableName", "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev");
             
