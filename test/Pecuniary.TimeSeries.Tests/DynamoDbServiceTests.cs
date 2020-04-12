@@ -165,8 +165,8 @@ namespace Pecuniary.TimeSeries.Tests
             results.First().high.Should().Be(decimal.Parse(high));
             results.First().close.Should().Be(decimal.Parse(close));
             results.First().volume.Should().Be(long.Parse(volume));
-            results.First().createdAt.Should().Be(DateTime.Parse(createdAt));
-            results.First().updatedAt.Should().Be(DateTime.Parse(createdAt));
+            results.First().createdAt.ToString("yyyy-MM-dd").Should().Be(DateTime.Parse(createdAt).ToString("yyyy-MM-dd"));
+            results.First().updatedAt.ToString("yyyy-MM-dd").Should().Be(DateTime.Parse(createdAt).ToString("yyyy-MM-dd"));
         }
 
         [Fact]
