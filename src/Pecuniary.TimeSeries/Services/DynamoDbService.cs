@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading.Tasks;
 using Amazon;
@@ -8,28 +9,26 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using EricBach.LambdaLogger;
-using Pecuniary.TimeSeries.Models;
 
 namespace Pecuniary.TimeSeries.Services
 {
-    public interface IDynamoDbService
-    {
-        Task<ICollection<T>> GetAllAsync<T>(string tableName);
-        Task SaveToDynamoAsync(IEnumerable<Quotes> symbols);
-    }
-
     public class DynamoDbService : IDynamoDbService
     {
         private readonly AmazonDynamoDBClient _dynamoDbClient;
         private readonly DynamoDBContext _dynamoDbContext;
-        private readonly string _tableName;
 
-        public DynamoDbService(string tableName)
+        private readonly string _tableName = Environment.GetEnvironmentVariable("TableName");
+
+        public DynamoDbService()
         {
             _dynamoDbClient = new AmazonDynamoDBClient(RegionEndpoint.USWest2);
             _dynamoDbContext = new DynamoDBContext(_dynamoDbClient);
+        }
 
-            _tableName = tableName;
+        public DynamoDbService(AmazonDynamoDBClient amazonDynamoDbClient, DynamoDBContext dynamoDbContext)
+        {
+            _dynamoDbClient = amazonDynamoDbClient;
+            _dynamoDbContext = dynamoDbContext;
         }
 
         /// <summary>
@@ -37,14 +36,14 @@ namespace Pecuniary.TimeSeries.Services
         /// </summary>
         /// <typeparam name="T">object</typeparam>
         /// <returns></returns>
-        public async Task<ICollection<T>> GetAllAsync<T>(string tableName)
+        public virtual async Task<ICollection<T>> GetAllAsync<T>()
         {
-            Logger.Log($"Scanning DynamoDB {tableName} for all TimeSeries");
+            Logger.Log($"Scanning DynamoDB {_tableName} for all TimeSeries");
 
             ICollection<T> results = new List<T>();
             try
             {
-                var docs = await _dynamoDbClient.ScanAsync(new ScanRequest(tableName));
+                var docs = await _dynamoDbClient.ScanAsync(new ScanRequest(_tableName));
 
                 Logger.Log($"Found items: {docs.Items.Count}");
 
@@ -65,7 +64,8 @@ namespace Pecuniary.TimeSeries.Services
             return results;
         }
 
-        public async Task SaveToDynamoAsync(IEnumerable<Quotes> symbols)
+        [ExcludeFromCodeCoverage]
+        public virtual async Task SaveToDynamoAsync(IEnumerable<Quotes> symbols)
         {
             foreach (var s in symbols)
             {

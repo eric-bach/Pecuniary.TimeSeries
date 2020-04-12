@@ -9,20 +9,27 @@ using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
 using EricBach.LambdaLogger;
 using Newtonsoft.Json;
-using Pecuniary.TimeSeries.Models;
 
 namespace Pecuniary.TimeSeries.Services
 {
     public class AlphaVantageService
     {
         private readonly HttpClient _httpClient;
+        private readonly AmazonSimpleSystemsManagementClient _ssmClient;
 
         public AlphaVantageService()
         {
             _httpClient = new HttpClient();
+            _ssmClient = new AmazonSimpleSystemsManagementClient(RegionEndpoint.USWest2);
         }
 
-        public async Task<IEnumerable<Quotes>> GetSymbol(Models.TimeSeries timeSeries, DateTime date)
+        public AlphaVantageService(HttpClient httpClient, AmazonSimpleSystemsManagementClient ssmClient)
+        {
+            _httpClient = httpClient;
+            _ssmClient = ssmClient;
+        }
+
+        public virtual async Task<IEnumerable<Quotes>> GetSymbol(TimeSeries timeSeries, DateTime date)
         {
             var uri = $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={timeSeries.symbol}&outputsize=full&apikey={await GetApiKey()}";
 
@@ -46,16 +53,20 @@ namespace Pecuniary.TimeSeries.Services
             return new List<Quotes>();
         }
 
-        private static async Task<string> GetApiKey()
+        private async Task<string> GetApiKey()
         {
-            var ssmClient = new AmazonSimpleSystemsManagementClient(RegionEndpoint.USWest2);
-            var apiKey = await ssmClient.GetParameterAsync(new GetParameterRequest
+            var apiKey = await _ssmClient.GetParameterAsync(new GetParameterRequest
             {
                 Name = "AlphaVantageApiKey"
             });
 
-            Logger.Log("Retrieved AlphaVantage API Key");
+            if (apiKey.Parameter == null)
+            {
+                Logger.Log("ERROR: Could not read SSM parameter AlphaVantageApiKey");
+                throw new Exception("ERROR: Could not read SSM parameter AlphaVantageApiKey");
+            }
 
+            Logger.Log("Retrieved AlphaVantage API Key");
             return apiKey.Parameter.Value;
         }
 
@@ -65,7 +76,7 @@ namespace Pecuniary.TimeSeries.Services
         /// <param name="timeSeries"></param>
         /// <param name="requestBody"></param>
         /// <returns></returns>
-        private static IEnumerable<Quotes> ConvertAlphaVantage(Models.TimeSeries timeSeries, string requestBody)
+        private static IEnumerable<Quotes> ConvertAlphaVantage(TimeSeries timeSeries, string requestBody)
         {
             var ts = new Regex(@"\""Time\sSeries\s\(Daily\)\"":\s{(.*)}", RegexOptions.Singleline);
             var tsMatches = ts.Matches(requestBody);
@@ -79,6 +90,7 @@ namespace Pecuniary.TimeSeries.Services
                 for (var i = 0; i < tsQuotesMatches.Count; i++)
                 {
                     var quote = JsonConvert.DeserializeObject<Quotes>("{" + tsQuotesMatches[i].Groups[2].Value + "}");
+
                     quote.Date = tsQuotesMatches[i].Groups[1].Value;
                     quote.Symbol = timeSeries.symbol;
                     quote.Name = timeSeries.name;

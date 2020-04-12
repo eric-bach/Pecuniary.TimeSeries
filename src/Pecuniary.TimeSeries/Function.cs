@@ -13,33 +13,42 @@ namespace Pecuniary.TimeSeries
 {
     public class Function
     {
-        private AlphaVantageService AlphaVantageService { get; }
-        public IDynamoDbService DynamoDbService { get; set; }
-
-        private static string _tableName;
+        public virtual AlphaVantageService AlphaVantageService { get; }
+        public virtual IDynamoDbService DynamoDbService { get; }
 
         public Function()
         {
-            var serviceCollection = new ServiceCollection();
-            ConfigureServices(serviceCollection);
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            _tableName = Environment.GetEnvironmentVariable("TableName") ?? "TimeSeries-5xjfz6mpa5g2rgwc47wfyqzjja-dev";
+            var serviceProvider = ConfigureServices();
 
             AlphaVantageService = serviceProvider.GetService<AlphaVantageService>();
             DynamoDbService = serviceProvider.GetService<IDynamoDbService>();
         }
 
-        private static void ConfigureServices(IServiceCollection serviceCollection)
+        /// <summary>
+        /// Used for unit testing
+        /// </summary>
+        /// <param name="dynamoDbService"></param>
+        /// <param name="alphaVantageService"></param>
+        public Function(IDynamoDbService dynamoDbService, AlphaVantageService alphaVantageService)
         {
-            serviceCollection.AddScoped<AlphaVantageService>();
-            serviceCollection.AddTransient<IDynamoDbService>(t => new DynamoDbService(_tableName));
+            AlphaVantageService = alphaVantageService;
+            DynamoDbService = dynamoDbService;
+        }
+
+        private static ServiceProvider ConfigureServices()
+        {
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<AlphaVantageService>()
+                .AddTransient<IDynamoDbService, DynamoDbService>()
+                .BuildServiceProvider();
+
+            return serviceProvider;
         }
 
         public async Task FunctionHandler()
         {
             // Get all the unique symbols
-            var docs = await DynamoDbService.GetAllAsync<Models.TimeSeries>(_tableName);
+            var docs = await DynamoDbService.GetAllAsync<TimeSeries>();
             var timeSeries = FilterTimeSeries(docs);
 
             // Get the quotes for the unique symbols
@@ -57,11 +66,11 @@ namespace Pecuniary.TimeSeries
         /// </summary>
         /// <param name="timeSeries"></param>
         /// <returns></returns>
-        private static IEnumerable<Models.TimeSeries> FilterTimeSeries(IEnumerable<Models.TimeSeries> timeSeries)
+        private static IEnumerable<TimeSeries> FilterTimeSeries(IEnumerable<TimeSeries> timeSeries)
         {
             var groupedTimeSeries = timeSeries.GroupBy(t => t.symbol).ToList();
 
-            var symbols = new List<Models.TimeSeries>();
+            var symbols = new List<TimeSeries>();
             for (var i = 0; i < groupedTimeSeries.Count; i++)
             {
                 // Take the time series with the most recent date

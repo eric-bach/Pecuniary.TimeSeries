@@ -1,7 +1,8 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Pecuniary.TimeSeries.Models
+// ReSharper disable once CheckNamespace
+namespace Pecuniary.TimeSeries
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class TimeSeries

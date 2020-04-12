@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 
-namespace Pecuniary.TimeSeries.Models
+// ReSharper disable once CheckNamespace
+namespace Pecuniary.TimeSeries
 {
     public class Quotes
     {
